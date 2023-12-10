@@ -1,16 +1,33 @@
 import React, { useEffect, useState } from "react";
 import ScrollToBottom from "react-scroll-to-bottom";
+import { AES, enc } from "crypto-js";
 
 function Chat({ socket, username, room }) {
   const [currentMessage, setCurrentMessage] = useState("");
   const [messageList, setMessageList] = useState([]);
 
+  const encryptMessage = (message) => {
+    // Here encrypts the message
+    const encryptedMessage = AES.encrypt(message, "your-secret-key").toString();
+    return encryptedMessage;
+  };
+
+  const decryptMessage = (encryptedMessage) => {
+    // Here decrypts the encrypted message
+    const decryptedMessage = AES.decrypt(
+      encryptedMessage,
+      "your-secret-key"
+    ).toString(enc.Utf8);
+    return decryptedMessage;
+  };
+
   const sendMessage = async () => {
     if (currentMessage !== "") {
+      const encryptedMessage = encryptMessage(currentMessage);
       const messageData = {
         room: room,
         author: username,
-        message: currentMessage,
+        message: encryptedMessage,
         time:
           new Date(Date.now()).getHours() +
           ":" +
@@ -18,21 +35,28 @@ function Chat({ socket, username, room }) {
       };
 
       await socket.emit("send_message", messageData);
+      messageData.message = currentMessage;
       setMessageList((list) => [...list, messageData]);
       setCurrentMessage("");
     }
   };
 
   useEffect(() => {
-    socket.on("receive_message", (data) => {
-      setMessageList((list) => [...list, data]);
-    });
+    const eventListener = (data) => {
+      // Add the incoming message by decrypting it
+      // The problem of the message being displayed twice has been solved with eventListener
+      const decryptedMessage = decryptMessage(data.message);
+      const updatedData = { ...data, message: decryptedMessage };
+      setMessageList((list) => [...list, updatedData]);
+    };
+    socket.on("receive_message", eventListener);
+    return () => socket.off("receive_message", eventListener);
   }, [socket]);
 
   return (
     <div className="chat-window">
       <div className="chat-header">
-        <p>Canlı Sohbet</p>
+        <p>Güvenli Canlı Sohbet</p>
       </div>
       <div className="chat-body">
         <ScrollToBottom className="message-container">

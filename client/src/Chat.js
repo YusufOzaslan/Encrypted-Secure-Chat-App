@@ -2,13 +2,16 @@ import React, { useEffect, useState } from "react";
 import ScrollToBottom from "react-scroll-to-bottom";
 import { AES, enc } from "crypto-js";
 
-function Chat({ socket, username, room }) {
+function Chat({ socket, username, room, secretKey }) {
   const [currentMessage, setCurrentMessage] = useState("");
   const [messageList, setMessageList] = useState([]);
 
   const encryptMessage = (message) => {
     // Here encrypts the message
-    const encryptedMessage = AES.encrypt(message, "your-secret-key").toString();
+    const encryptedMessage = AES.encrypt(
+      message,
+      secretKey.toString("hex")
+    ).toString();
     return encryptedMessage;
   };
 
@@ -16,7 +19,7 @@ function Chat({ socket, username, room }) {
     // Here decrypts the encrypted message
     const decryptedMessage = AES.decrypt(
       encryptedMessage,
-      "your-secret-key"
+      secretKey.toString("hex")
     ).toString(enc.Utf8);
     return decryptedMessage;
   };
@@ -56,13 +59,14 @@ function Chat({ socket, username, room }) {
   return (
     <div className="chat-window">
       <div className="chat-header">
-        <p>Güvenli Canlı Sohbet</p>
+        <p>Canlı Sohbet</p>
       </div>
       <div className="chat-body">
         <ScrollToBottom className="message-container">
-          {messageList.map((messageContent) => {
+          {messageList.map((messageContent, index) => {
             return (
               <div
+                key={index}
                 className="message"
                 id={username === messageContent.author ? "other" : "you"}
               >

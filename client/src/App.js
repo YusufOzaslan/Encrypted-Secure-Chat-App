@@ -6,8 +6,8 @@ import Chat from "./Chat";
 import "./App.css";
 
 window.Buffer = Buffer;
-
-const socket = io.connect("http://192.168.2.182:3001");
+// 192.168.10.253 192.168.2.182
+const socket = io.connect("http://192.168.10.253:3001");
 
 function App() {
   const [room, setRoom] = useState("");
@@ -22,15 +22,30 @@ function App() {
     if (username !== "" && room !== "") {
       console.log(clientPublicKey.current);
       socket.emit("join_room", room);
-      socket.on("share_public_key", (receivedData) => {
-        const receivedClientPublicKey = receivedData.publicKey;
-        receivedPublicKey.current = Buffer.from(receivedClientPublicKey, "hex");
-        console.log("Received public key:", receivedPublicKey);
+
+      // Create a Promise to wait for the public key to be received
+      const waitForPublicKey = new Promise((resolve) => {
+        socket.on("share_public_key", (receivedData) => {
+          const receivedClientPublicKey = receivedData.publicKey;
+          receivedPublicKey.current = Buffer.from(
+            receivedClientPublicKey,
+            "hex"
+          );
+          console.log("Received public key:", receivedPublicKey);
+          // Resolve the Promise when the operation is complete
+          resolve();
+        });
       });
-      secretKey.current = clientDHRef.current.computeSecret(
-        receivedPublicKey.current
-      );
-      setShowChat(true);
+
+      // Continue when the above Promise is resolved
+      waitForPublicKey.then(() => {
+        // Now the share_public_key operation is complete
+        secretKey.current = clientDHRef.current.computeSecret(
+          receivedPublicKey.current
+        );
+        console.log("Generated secret key:", secretKey.current.toString("hex"));
+        setShowChat(true);
+      });
     }
   };
 

@@ -21,7 +21,8 @@ const dhParams = {
 
 const io = new Server(server, {
   cors: {
-    origin: "http://192.168.2.182:3000",
+    // 192.168.10.253 192.168.2.182
+    origin: "http://192.168.10.253:3000",
     methods: ["GET", "POST"],
   },
 });
@@ -46,7 +47,7 @@ io.on("connection", (socket) => {
     // Get the current user's public key
     const currentPublicKey = userPublicKeyMap.get(socket.id);
 
-    // Get the other user's public key. Assuming there are only two users.
+    // Get the other user's public key.
     const otherPublicKeys = Array.from(userPublicKeyMap.values()).find(
       (key) => key !== currentPublicKey
     );

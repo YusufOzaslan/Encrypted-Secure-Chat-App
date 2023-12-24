@@ -59,7 +59,7 @@ function Chat({ socket, username, room, secretKey }) {
   return (
     <div className="chat-window">
       <div className="chat-header">
-        <p>Canlı Sohbet</p>
+        <p>Live Chat</p>
       </div>
       <div className="chat-body">
         <ScrollToBottom className="message-container">
